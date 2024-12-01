@@ -1,0 +1,14 @@
+[package]
+name = "a-tour-of-rust"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+
+[workspace]
+members = [
+    "course/fundamentals/auth", 
+    "course/fundamentals/library",
+    "course/fundamentals/text_input",
+    "course/fundamentals/variables",
+]
