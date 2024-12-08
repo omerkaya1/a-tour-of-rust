@@ -34,11 +34,21 @@ impl User {
     }
 }
 
-pub fn get_autorised_users() -> [User; 2] {
-    [
+// [User; 2] <- array
+// Vec<User> <- vector
+pub fn get_autorised_users() -> Vec<User> {
+    vec![
         User::new("admin", "password", LoginEntities::Admin),
         User::new("some", "password", LoginEntities::User)
     ]
+}
+
+fn get_admin_users() -> Vec<String> {
+    get_autorised_users().
+        into_iter().
+        filter(|user| user.role == LoginEntities::Admin).
+        map(|user| user.username).
+        collect()
 }
 
 pub fn login(username: &str, password: &str) -> Option<LoginAction> {    
@@ -84,4 +94,11 @@ mod tests {
         assert_eq!(login("no-admin", "password"), Some(LoginAction::Denied));
         assert_eq!(login("admin", "no-password"), Some(LoginAction::Denied));
     }
+
+
+    #[test]
+    fn test_get_admin_users() {
+        assert_eq!(get_admin_users(), vec!["admin"])
+    }
+
 }
