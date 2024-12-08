@@ -1,4 +1,4 @@
-use auth::{greeting, login, read_line};
+use auth::{greeting, login, read_line, LoginAction};
 
 fn main() {
 	println!("{}", greeting("cruel world"));
@@ -10,9 +10,21 @@ fn main() {
 
 		println!("Please enter your password:");
 		let password = read_line();
-		if login(&username, &password) {
-			println!("Welcome, {}!", username);
-			return;
+
+		match login(&username, &password) {
+			Some(LoginAction::Granted(role)) => {
+				match role {
+					auth::LoginEntities::Admin => println!("Admin"),
+					auth::LoginEntities::User => println!("User")
+				}
+				break;
+			}
+			Some(LoginAction::Denied) => {
+
+			}
+			None => {
+				println!("None matched!")
+			}
 		}
 
 		attempts -= 1;
