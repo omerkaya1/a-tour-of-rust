@@ -12,26 +12,46 @@ pub enum LoginAction {
     Denied,
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub enum LoginEntities {
     Admin,
     User,
 }
 
+pub struct User {
+    pub username: String,
+    pub password: String,
+    pub role: LoginEntities,
+}
+
+impl User {
+    pub fn new(username: &str, password: &str, role: LoginEntities) -> User {
+        User { 
+            username: username.to_lowercase(), 
+            password: password.to_lowercase(), 
+            role 
+        }
+    }
+}
+
+pub fn get_autorised_users() -> [User; 2] {
+    [
+        User::new("admin", "password", LoginEntities::Admin),
+        User::new("some", "password", LoginEntities::User)
+    ]
+}
+
 pub fn login(username: &str, password: &str) -> Option<LoginAction> {    
     let username = username.to_lowercase();
+    let users = get_autorised_users();
 
-    if username != "admin" || username != "some" {
-        return None;
+    if let Some(user) = users.iter().find(|user| user.username == username) {
+        if user.password == password {
+            return Some(LoginAction::Granted(user.role.clone())); // cloning capability is defined within the derive directive.
+        }
+        return Some(LoginAction::Denied);
     }
- 
-    if username == "admin" && password == "password" {
-        return Some(LoginAction::Granted(LoginEntities::Admin));
-    }
-    if username == "some" && password == "password" {
-        return Some(LoginAction::Granted(LoginEntities::User));
-    }
-    Some(LoginAction::Denied)
+    None
 }
 
 pub fn read_line() -> String {
