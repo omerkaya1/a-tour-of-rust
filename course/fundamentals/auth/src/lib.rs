@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 pub fn add(left: u64, right: u64) -> u64 {
     left + right
 }
@@ -18,6 +20,7 @@ pub enum LoginEntities {
     User,
 }
 
+#[derive(Debug)]
 pub struct User {
     pub username: String,
     pub password: String,
@@ -26,10 +29,10 @@ pub struct User {
 
 impl User {
     pub fn new(username: &str, password: &str, role: LoginEntities) -> User {
-        User { 
-            username: username.to_lowercase(), 
-            password: password.to_lowercase(), 
-            role 
+        User {
+            username: username.to_lowercase(),
+            password: password.to_lowercase(),
+            role,
         }
     }
 }
@@ -39,23 +42,46 @@ impl User {
 pub fn get_autorised_users() -> Vec<User> {
     vec![
         User::new("admin", "password", LoginEntities::Admin),
-        User::new("some", "password", LoginEntities::User)
+        User::new("some", "password", LoginEntities::User),
     ]
 }
 
-fn get_admin_users() -> Vec<String> {
-    get_autorised_users().
-        into_iter().
-        filter(|user| user.role == LoginEntities::Admin).
-        map(|user| user.username).
-        collect()
+pub fn get_authorised_users_map() -> HashMap<String, User> {
+    let mut users = HashMap::new();
+    users.insert(
+        "admin".to_string(),
+        User::new("admin", "password", LoginEntities::Admin),
+    );
+    users.insert(
+        "some".to_string(),
+        User::new("some", "password", LoginEntities::User),
+    );
+    users
 }
 
-pub fn login(username: &str, password: &str) -> Option<LoginAction> {    
-    let username = username.to_lowercase();
-    let users = get_autorised_users();
+fn get_admin_users() -> Vec<String> {
+    get_autorised_users()
+        .into_iter()
+        .filter(|user| user.role == LoginEntities::Admin)
+        .map(|user| user.username)
+        .collect()
+}
 
-    if let Some(user) = users.iter().find(|user| user.username == username) {
+pub fn login(username: &str, password: &str) -> Option<LoginAction> {
+    let username = username.to_lowercase();
+
+    // using vectorised solution
+    // let users = get_autorised_users();
+    // if let Some(user) = users.iter().find(|user| user.username == username) {
+    //     if user.password == password {
+    //         return Some(LoginAction::Granted(user.role.clone())); // cloning capability is defined within the derive directive.
+    //     }
+    //     return Some(LoginAction::Denied);
+    // }
+
+    // using a map
+    let users = get_authorised_users_map();
+    if let Some(user) = users.get(&username) {
         if user.password == password {
             return Some(LoginAction::Granted(user.role.clone())); // cloning capability is defined within the derive directive.
         }
@@ -89,16 +115,20 @@ mod tests {
 
     #[test]
     fn test_login() {
-        assert_eq!(login("admin", "password"), Some(LoginAction::Granted(LoginEntities::Admin)));
-        assert_eq!(login("some", "password"), Some(LoginAction::Granted(LoginEntities::User)));
+        assert_eq!(
+            login("admin", "password"),
+            Some(LoginAction::Granted(LoginEntities::Admin))
+        );
+        assert_eq!(
+            login("some", "password"),
+            Some(LoginAction::Granted(LoginEntities::User))
+        );
         assert_eq!(login("no-admin", "password"), Some(LoginAction::Denied));
         assert_eq!(login("admin", "no-password"), Some(LoginAction::Denied));
     }
-
 
     #[test]
     fn test_get_admin_users() {
         assert_eq!(get_admin_users(), vec!["admin"])
     }
-
 }
