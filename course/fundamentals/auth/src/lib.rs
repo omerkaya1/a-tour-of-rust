@@ -3,6 +3,15 @@ use std::path::Path;
 
 use serde::{Serialize, Deserialize};
 
+pub fn hash_pwd(pwd: &str) -> String {
+    use sha2::Digest;
+
+    let mut hasher = sha2::Sha256::new();
+    hasher.update(pwd);
+
+    format!("{:X}", hasher.finalize())
+}
+
 pub fn add(left: u64, right: u64) -> u64 {
     left + right
 }
@@ -34,7 +43,7 @@ impl User {
     pub fn new(username: &str, password: &str, role: LoginEntities) -> User {
         User {
             username: username.to_lowercase(),
-            password: password.to_lowercase(),
+            password: hash_pwd(password),
             role,
         }
     }
@@ -88,6 +97,7 @@ fn get_admin_users() -> Vec<String> {
 
 pub fn login(username: &str, password: &str) -> Option<LoginAction> {
     let username = username.to_lowercase();
+    let password = hash_pwd(password);
 
     // using vectorised solution
     // let users = get_autorised_users();
