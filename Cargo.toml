@@ -8,7 +8,8 @@ edition = "2021"
 [workspace]
 members = [
     "course/fundamentals/auth", 
-    "course/fundamentals/library",
+    "course/fundamentals/library", 
+    "course/fundamentals/login_manager",
     "course/fundamentals/text_input",
     "course/fundamentals/variables",
 ]
