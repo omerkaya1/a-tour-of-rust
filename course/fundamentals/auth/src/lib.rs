@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::path::Path;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 pub fn hash_pwd(pwd: &str) -> String {
     use sha2::Digest;
@@ -71,6 +71,12 @@ pub fn get_authorised_users_map() -> HashMap<String, User> {
     users
 }
 
+pub fn save_users(users: HashMap<String, User>) {
+    let users_path = Path::new("users.json");
+    let users_json = serde_json::to_string(&users).unwrap();
+    std::fs::write(users_path, users_json).unwrap();
+}
+
 pub fn get_default_users() -> HashMap<String, User> {
     let users_path = Path::new("users.json");
 
@@ -92,8 +98,6 @@ fn get_admin_users() -> Vec<String> {
         .map(|user| user.username)
         .collect()
 }
-
-
 
 pub fn login(username: &str, password: &str) -> Option<LoginAction> {
     let username = username.to_lowercase();
