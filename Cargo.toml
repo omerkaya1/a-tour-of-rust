@@ -9,7 +9,7 @@ edition = "2021"
 members = [
     "course/fundamentals/auth", 
     "course/fundamentals/library", 
-    "course/fundamentals/login_manager", "course/fundamentals/module_two/hello_thread", "course/fundamentals/module_two/thread_builder", "course/fundamentals/module_two/workers",
+    "course/fundamentals/login_manager", "course/fundamentals/module_two/hello_thread", "course/fundamentals/module_two/scoped_thread", "course/fundamentals/module_two/thread_builder", "course/fundamentals/module_two/workers",
     "course/fundamentals/text_input",
     "course/fundamentals/variables",
 ]
