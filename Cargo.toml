@@ -14,6 +14,7 @@ members = [
     "course/fundamentals/module_two/deadlock",
     "course/fundamentals/module_two/footgun",
     "course/fundamentals/module_two/hello_thread",
+    "course/fundamentals/module_two/lock_free",
     "course/fundamentals/module_two/mutexes_explored",
     "course/fundamentals/module_two/rw_mutexes_explored",
     "course/fundamentals/module_two/scoped_thread",
