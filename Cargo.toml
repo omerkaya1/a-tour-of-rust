@@ -20,9 +20,10 @@ members = [
     "course/fundamentals/module_two/rw_mutexes_explored",
     "course/fundamentals/module_two/scoped_thread",
     "course/fundamentals/module_two/thread_builder",
-    "course/fundamentals/module_two/thread_park", 
+    "course/fundamentals/module_two/thread_park",
     "course/fundamentals/module_two/threadpool",
     "course/fundamentals/module_two/workers",
+    "course/fundamentals/module_two/workqueue",
     "course/fundamentals/text_input",
     "course/fundamentals/variables",
 ]
