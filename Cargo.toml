@@ -28,6 +28,7 @@ members = [
     "course/fundamentals/module_two/workqueue",
     "course/fundamentals/text_input",
     "course/fundamentals/variables",
-    "course/fundamentals/module_two/rayon_iters", 
+    "course/fundamentals/module_two/rayon_iters",
     "course/fundamentals/module_two/rayon_scopes",
+    "course/fundamentals/module_three/hello_async",
 ]
