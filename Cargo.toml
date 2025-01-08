@@ -30,6 +30,7 @@ members = [
     "course/fundamentals/variables",
     "course/fundamentals/module_two/rayon_iters",
     "course/fundamentals/module_two/rayon_scopes",
-    "course/fundamentals/module_three/hello_async", 
+    "course/fundamentals/module_three/hello_async",
     "course/fundamentals/module_three/hello_tokio",
+    "course/fundamentals/module_three/tokio_further",
 ]
