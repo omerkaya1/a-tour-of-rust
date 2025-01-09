@@ -34,5 +34,6 @@ members = [
     "course/fundamentals/module_three/hello_tokio",
     "course/fundamentals/module_three/tokio_further",
     "course/fundamentals/module_three/blocking_tasks",
-     "course/fundamentals/module_three/tokio_uts",
+     "course/fundamentals/module_three/tokio_uts", 
+     "course/fundamentals/module_three/err_handling",
 ]
