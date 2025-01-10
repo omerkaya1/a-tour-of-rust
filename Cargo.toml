@@ -38,4 +38,5 @@ members = [
     "course/fundamentals/module_three/err_handling",
     "course/fundamentals/module_three/file_io",
     "course/fundamentals/module_three/network_io",
+    "course/fundamentals/module_three/tcpserver",
 ]
