@@ -43,4 +43,9 @@ async fn main() -> anyhow::Result<()> {
         tx.send(Command::Print(format!("counter: {counter}"))).unwrap();
         counter += 1;
     }
+
+    // broadcast channel - alike sync.Cond?
+    // let (tx, mut rx) = tokio::sync::broadcast::channel::<String>(10);
+
+    // tx.send("beep".to_string());
 }
