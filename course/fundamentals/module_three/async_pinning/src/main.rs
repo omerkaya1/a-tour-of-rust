@@ -1,5 +1,9 @@
 #![allow(dead_code)] // allows for the dead code warnings suppressed on compillation
 
+use std::{
+    pin::Pin,
+};
+use futures::future::Future;
 use async_recursion::*;
 
 struct Some {}
@@ -13,8 +17,34 @@ async fn fib(n: u32) -> u32 {
     }
 }
 
+async fn one() {
+    println!("one");
+}
+
+async fn two() {
+    println!("two");
+}
+
+async fn call_either(n: u32) -> Pin<Box<dyn Future<Output = ()>>> {
+    println!("HERE!");
+    match n {
+        1 => Box::pin(one()),
+        2 => Box::pin(two()),
+        _ => panic!("PPAAAAANICCC!")
+    }
+}
+
 #[tokio::main]
 async fn main() {
-    println!("some");
+
+
     println!("fibonacci(10) = {}", fib(10).await);
+
+    let future = async {
+        println!("hi!");
+    };
+
+    tokio::pin!(future);
+
+    (&mut future).await
 }
