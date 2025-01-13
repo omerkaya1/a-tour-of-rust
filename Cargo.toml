@@ -43,4 +43,5 @@ members = [
     "course/fundamentals/module_three/tokio_shared_state",
     "course/fundamentals/module_three/tokio_select",
     "course/fundamentals/module_three/async_pinning",
+     "course/fundamentals/module_three/tokio_tracing",
 ]
