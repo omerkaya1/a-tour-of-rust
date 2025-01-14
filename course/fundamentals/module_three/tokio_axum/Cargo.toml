@@ -1,0 +1,9 @@
+[package]
+name = "tokio_axum"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.95"
+axum = { version = "0.8.1", features = ["__private", "http2", "macros", "ws"] }
+tokio = { version = "1.43.0", features = ["full"] }
