@@ -45,5 +45,6 @@ members = [
     "course/fundamentals/module_three/async_pinning",
     "course/fundamentals/module_three/tokio_tracing",
     "course/fundamentals/module_three/db",
-    "course/fundamentals/module_three/tokio_axum",
+    "course/fundamentals/module_three/tokio_axum", 
+    "course/fundamentals/module_three/thumbnail_service",
 ]
