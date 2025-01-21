@@ -1,7 +1,14 @@
 #![allow(dead_code)]
 
-use axum::{extract::{Multipart, Path}, body::Body, http::{header, HeaderMap}, response::{Html, IntoResponse}, routing::{get, post}, Extension, Router};
-use sqlx::{Row};
+use axum::{
+    body::Body,
+    extract::{Multipart, Path},
+    http::{header, HeaderMap},
+    response::{Html, IntoResponse},
+    routing::{get, post},
+    Extension, Router,
+};
+use sqlx::Row;
 use tokio_util::io::ReaderStream;
 
 async fn test(Extension(pool): Extension<sqlx::SqlitePool>) -> String {
@@ -21,9 +28,9 @@ async fn index_page() -> Html<String> {
 
 async fn insert_image(pool: &sqlx::SqlitePool, data: &str) -> anyhow::Result<i64> {
     let row = sqlx::query("insert into images (tags) values (?) returning id")
-    .bind(data)
-    .fetch_one(pool)
-    .await?;
+        .bind(data)
+        .fetch_one(pool)
+        .await?;
 
     Ok(row.get(0))
 }
@@ -49,7 +56,10 @@ async fn save_image(id: i64, bytes: &[u8]) -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn uploader(Extension(pool): Extension<sqlx::SqlitePool>, mut multipart: Multipart) -> String {
+async fn uploader(
+    Extension(pool): Extension<sqlx::SqlitePool>,
+    mut multipart: Multipart,
+) -> String {
     let mut tags = None;
     let mut image = None;
     while let Some(field) = multipart.next_field().await.unwrap() {
@@ -84,14 +94,36 @@ async fn get_image(Path(id): Path<i64>) -> impl IntoResponse {
     );
     headers.insert(
         header::CONTENT_DISPOSITION,
-        header::HeaderValue::from_str(&attachment).unwrap()
+        header::HeaderValue::from_str(&attachment).unwrap(),
     );
     let file = tokio::fs::File::open(&filename).await.unwrap();
     axum::response::Response::builder()
-        .header(header::CONTENT_TYPE, header::HeaderValue::from_static("image/jpeg"))
-        .header(header::CONTENT_DISPOSITION, header::HeaderValue::from_str(&attachment).unwrap())
+        .header(
+            header::CONTENT_TYPE,
+            header::HeaderValue::from_static("image/jpeg"),
+        )
+        .header(
+            header::CONTENT_DISPOSITION,
+            header::HeaderValue::from_str(&attachment).unwrap(),
+        )
         .body(Body::from_stream(ReaderStream::new(file)))
         .unwrap()
+}
+
+fn make_thumbnail(id: i64) -> anyhow::Result<()> {
+    let image_path = format!("images/{id}.jpg");
+    let thumbnail_path = format!("images/{id}_thumb.jpg");
+    let image_bytes = std::fs::read(image_path)?;
+
+    let image = if let Ok(format) = image::guess_format(&image_bytes) {
+        image::load_from_memory_with_format(&image_bytes, format)?
+    } else {
+        image::load_from_memory(&image_bytes)?
+    };
+
+    let thumbnail = image.thumbnail(100, 100);
+    thumbnail.save(thumbnail_path)?;
+    Ok(())
 }
 
 #[tokio::main]
@@ -105,11 +137,11 @@ async fn main() -> anyhow::Result<()> {
 
     // Build Axum with an "extension" to hold the database connection pool
     let app = Router::new()
-    .route("/", get(test))
-    .route("/index", get(index_page))
-    .route("/upload", post(uploader))
-    .route("/image/{id}", get(get_image))
-    .layer(Extension(pool));
+        .route("/", get(test))
+        .route("/index", get(index_page))
+        .route("/upload", post(uploader))
+        .route("/image/{id}", get(get_image))
+        .layer(Extension(pool));
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
     axum::serve(listener, app).await?;
