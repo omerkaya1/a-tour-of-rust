@@ -8,7 +8,9 @@ use axum::{
     routing::{get, post},
     Extension, Router,
 };
-use sqlx::Row;
+use futures::TryStreamExt;
+use sqlx::{Pool, Row, Sqlite};
+use tokio::task::spawn_blocking;
 use tokio_util::io::ReaderStream;
 
 async fn test(Extension(pool): Extension<sqlx::SqlitePool>) -> String {
@@ -27,7 +29,7 @@ async fn index_page() -> Html<String> {
 }
 
 async fn insert_image(pool: &sqlx::SqlitePool, data: &str) -> anyhow::Result<i64> {
-    let row = sqlx::query("insert into images (tags) values (?) returning id")
+    let row = sqlx::query("INSERT INTO images (tags) VALUES (?) RETURNING id")
         .bind(data)
         .fetch_one(pool)
         .await?;
@@ -78,6 +80,9 @@ async fn uploader(
     if let (Some(tags), Some(image)) = (tags, image) {
         let new_img_id = insert_image(&pool, &tags).await.unwrap();
         save_image(new_img_id, &image).await.unwrap();
+        spawn_blocking(move || {
+            make_thumbnail(new_img_id).unwrap();
+        });
     } else {
         panic!("unknor or missing field");
     }
@@ -113,7 +118,7 @@ async fn get_image(Path(id): Path<i64>) -> impl IntoResponse {
 fn make_thumbnail(id: i64) -> anyhow::Result<()> {
     let image_path = format!("images/{id}.jpg");
     let thumbnail_path = format!("images/{id}_thumb.jpg");
-    let image_bytes = std::fs::read(image_path)?;
+    let image_bytes: Vec<u8> = std::fs::read(image_path)?;
 
     let image = if let Ok(format) = image::guess_format(&image_bytes) {
         image::load_from_memory_with_format(&image_bytes, format)?
@@ -126,6 +131,20 @@ fn make_thumbnail(id: i64) -> anyhow::Result<()> {
     Ok(())
 }
 
+async fn fill_missing_thumbnails(pool: &Pool<Sqlite>) -> anyhow::Result<()> {
+    let mut rows = sqlx::query("SELECT id FROM images;").fetch(pool);
+
+    while let Some(row) = rows.try_next().await? {
+        let id = row.get::<i64, _>(0);
+        let thumbnail_path = format!("images/{id}_thumb.jpg");
+        if !std::path::Path::new(&thumbnail_path).exists() {
+            spawn_blocking(move || make_thumbnail(id)).await??;
+        }
+    }
+
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     dotenv::dotenv()?;
@@ -134,6 +153,9 @@ async fn main() -> anyhow::Result<()> {
     let pool = sqlx::SqlitePool::connect(&db_url).await?;
 
     sqlx::migrate!("./migrations").run(&pool).await?;
+
+    // fill in all the missing thumbnails
+    fill_missing_thumbnails(&pool).await?;
 
     // Build Axum with an "extension" to hold the database connection pool
     let app = Router::new()
