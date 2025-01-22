@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 #[derive(Debug)]
 struct Droppable(i32);
@@ -16,18 +16,30 @@ impl Drop for Droppable {
     }
 }
 
-fn move_me(x: Rc<Droppable>) {
+fn move_me(x: Arc<Droppable>) {
     println!("Moved {}", x.0);
 }
 
 fn main() {
-    let my_shared = Rc::new(Droppable::new(1));
+    let my_shared = Arc::new(Droppable::new(1));
     {
         let _x = my_shared.clone();
         let _y = my_shared.clone();
         let _z = my_shared.clone();
     }
     move_me(my_shared.clone());
+
+    let mut threads = Vec::new();
+    for _ in 0..10 {
+        let my_clone = my_shared.clone();
+        threads.push(std::thread::spawn(move || {
+            println!("{my_clone:?}");
+        }));
+    }
+
+    for t in threads {
+        t.join().unwrap();
+    }
 
     println!("{my_shared:?}");
     println!("Application exit");
