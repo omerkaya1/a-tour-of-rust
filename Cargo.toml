@@ -47,6 +47,7 @@ members = [
     "course/fundamentals/module_three/db",
     "course/fundamentals/module_three/tokio_axum",
     "course/fundamentals/module_three/thumbnail_service",
-    "course/fundamentals/module_four/memory", 
+    "course/fundamentals/module_four/memory",
     "course/fundamentals/module_four/dropping",
+    "course/fundamentals/module_four/raii",
 ]
