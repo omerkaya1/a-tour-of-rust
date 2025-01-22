@@ -64,33 +64,61 @@
 //     // println!("{}", data.0);
 // }
 
-use std::sync::{Arc, Mutex};
+// use std::sync::{Arc, Mutex};
 
-struct SharedData{
-    data: Mutex<String>,
+// struct SharedData{
+//     data: Mutex<String>,
+// }
+
+// impl SharedData {
+//     fn new(s: &str) -> Self {
+//         Self {
+//             data: Mutex::new(s.to_string()),
+//         }
+//     }
+// }
+
+// fn main() {
+//     let my_shared = Arc::new(SharedData::new("Hello"));
+//     let mut threads = Vec::new();
+//     for i in 0..10 {
+//         let my_shared = my_shared.clone();
+//         threads.push(std::thread::spawn(move || {
+//             let mut data = my_shared.data.lock().unwrap();
+//             data.push_str(&format!(" {i}"));
+//         }));
+//     }
+//     for t in threads {
+//         t.join().unwrap();
+//     }
+//     let data = my_shared.data.lock().unwrap();
+//     println!("{data}");
+// }
+
+// no threads needed example
+// it is not unsafe - still, whenever it is locked from two places, the RefCell crushes the programme
+use std::{cell::RefCell, sync::Arc};
+
+struct MyData {
+    data: RefCell<String>
 }
 
-impl SharedData {
-    fn new(s: &str) -> Self {
+impl MyData {
+    fn new() -> Self {
         Self {
-            data: Mutex::new(s.to_string()),
+            data: RefCell::new("Hello".to_string())
         }
     }
 }
 
+fn move_data(data: Arc<MyData>) {
+    let mut data = data.data.borrow_mut();
+    data.push_str(" World");
+}
+
 fn main() {
-    let my_shared = Arc::new(SharedData::new("Hello"));
-    let mut threads = Vec::new();
-    for i in 0..10 {
-        let my_shared = my_shared.clone();
-        threads.push(std::thread::spawn(move || {
-            let mut data = my_shared.data.lock().unwrap();
-            data.push_str(&format!(" {i}"));
-        }));
-    }
-    for t in threads {
-        t.join().unwrap();
-    }
-    let data = my_shared.data.lock().unwrap();
+    let shared_data = Arc::new(MyData::new());
+    move_data(shared_data.clone());
+    let data = shared_data.data.borrow();
     println!("{data}");
 }
