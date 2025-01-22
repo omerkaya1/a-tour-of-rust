@@ -49,7 +49,8 @@ members = [
     "course/fundamentals/module_three/thumbnail_service",
     "course/fundamentals/module_four/memory",
     "course/fundamentals/module_four/dropping",
-    "course/fundamentals/module_four/raii", 
-    "course/fundamentals/module_four/ref_counting", 
+    "course/fundamentals/module_four/raii",
+    "course/fundamentals/module_four/ref_counting",
     "course/fundamentals/module_four/lifetimes",
+    "course/fundamentals/module_four/traits",
 ]
