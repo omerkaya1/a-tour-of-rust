@@ -53,5 +53,6 @@ members = [
     "course/fundamentals/module_four/ref_counting",
     "course/fundamentals/module_four/lifetimes",
     "course/fundamentals/module_four/traits",
-    "course/fundamentals/module_four/generics",
+    "course/fundamentals/module_four/generics", 
+    "course/fundamentals/module_four/iterators",
 ]
