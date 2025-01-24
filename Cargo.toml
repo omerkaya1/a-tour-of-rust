@@ -56,4 +56,5 @@ members = [
     "course/fundamentals/module_four/generics",
     "course/fundamentals/module_four/iterators",
     "course/fundamentals/module_four/linked_list",
+    "course/fundamentals/module_four/packing",
 ]
