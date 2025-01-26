@@ -61,4 +61,5 @@ members = [
     "course/fundamentals/five/rustamania",
     "course/fundamentals/five/shared_data",
     "course/fundamentals/five/collector",
+    "course/fundamentals/five/server",
 ]
