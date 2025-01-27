@@ -15,6 +15,6 @@ fn main() {
 
     // send the received command over the wire
     while let Ok(cmd) = rx.recv() {
-        sender::send_command(cmd);
+        let _ = sender::send_command(cmd); // error is ignored
     }
 }

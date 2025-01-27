@@ -36,7 +36,7 @@ pub fn collect_data(tx: Sender<CollectorCommandV1>) {
 			average_cpu_usage: cpu_usage_avg, 
 		});
 		if let Err(e) = send_result {
-			// pooe man's error logging
+			// poor man's error logging
 			println!("failure to send data to channel: {e:?}");
 		}
 
