@@ -1,8 +1,4 @@
-#![allow(dead_code, unused)]
-
 use std::collections::VecDeque;
-
-use sender::send_command;
 use shared_data::{encode_v1, CollectorCommandV1};
 
 mod collector;
@@ -11,9 +7,11 @@ mod sender;
 fn main() {
     let (tx, rx) = std::sync::mpsc::channel::<CollectorCommandV1>();
 
+    let uid = collector::get_uuid();
+
     // the collector thread initialisation
     let collector_thread = std::thread::spawn(move || {
-        collector::collect_data(tx);
+        collector::collect_data(uid, tx);
     });
 
     // send the received command over the wire
@@ -23,4 +21,6 @@ fn main() {
         cmd_queue.push_back(encoded);
         let _ = sender::send_queue(&mut cmd_queue); // error is ignored
     }
+
+    collector_thread.join().unwrap();
 }
