@@ -10,12 +10,10 @@ pub enum CollectorError {
     UnableToSend,
 }
 
-pub fn send_command(cmd: CollectorCommandV1) -> Result<(), CollectorError> {
-    let b = shared_data::encode_v1(cmd);
-    println!("Encoded {} bytes", b.len());
+pub fn send_command(cmd_b: &[u8]) -> Result<(), CollectorError> {
     let mut stream = std::net::TcpStream::connect(DATA_COLLECTION_ADDRESS)
         .map_err(|_| CollectorError::UnableToConnect)?;
     stream
-        .write_all(&b)
+        .write_all(cmd_b)
         .map_err(|_| CollectorError::UnableToSend)
 }
