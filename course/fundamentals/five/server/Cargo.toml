@@ -12,4 +12,5 @@ serde = { version = "1.0.217", features = ["derive"] }
 shared_data = { path = "../shared_data" }
 sqlx = { version = "0.8.3", features = ["sqlite", "runtime-tokio-native-tls"] }
 tokio = { version = "1.43.0", features = ["full"] }
+tower-http = { version = "0.6.2", features = ["cors"] }
 uuid = "1.12.1"

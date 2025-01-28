@@ -1,4 +1,4 @@
-use axum::{Extension, Json, extract::Path};
+use axum::{extract::Path, response::Html, Extension, Json};
 use serde::Serialize;
 use sqlx::FromRow;
 
@@ -41,11 +41,6 @@ FROM timeseries ts;
 pub async fn show_collectors(
     Extension(pool): Extension<sqlx::SqlitePool>,
 ) -> Json<Vec<CollectorData>> {
-    let rows = sqlx::query_as::<_, DataPoint>("SELECT * FROM timeseries")
-        .fetch_all(&pool)
-        .await
-        .unwrap();
-
     Json(
         sqlx::query_as::<_, CollectorData>(SHOW_COLLECTORS_QUERY)
             .fetch_all(&pool)
@@ -64,4 +59,10 @@ pub async fn collector_data(Extension(pool): Extension<sqlx::SqlitePool>, id: Pa
         .unwrap();
 
     Json(rows)
+}
+
+pub async fn index() -> Html<String> {
+    let path = std::path::Path::new("web/index.html");
+    let contents = tokio::fs::read_to_string(path).await.unwrap();
+    Html(contents)
 }
