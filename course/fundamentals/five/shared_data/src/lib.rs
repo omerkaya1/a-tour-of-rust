@@ -25,10 +25,9 @@ pub enum CollectorCommandV1 {
 }
 
 pub fn encode_v1(cmd: &CollectorCommandV1) -> Vec<u8> {
-    let json = serde_json::to_string(&cmd).unwrap();
-    let json_b = json.as_bytes();
-    let crc = crc32fast::hash(json_b);
-    let payload_size = json_b.len() as u32;
+    let payload_bytes = bincode::serialize(cmd).unwrap();
+    let crc = crc32fast::hash(&payload_bytes);
+    let payload_size = payload_bytes.len() as u32;
     let ts = unix_now();
 
     let mut result = Vec::with_capacity(140);
@@ -36,7 +35,7 @@ pub fn encode_v1(cmd: &CollectorCommandV1) -> Vec<u8> {
     result.extend_from_slice(&VERSION_NUMBER.to_be_bytes());
     result.extend_from_slice(&ts.to_be_bytes());
     result.extend_from_slice(&payload_size.to_be_bytes());
-    result.extend_from_slice(json_b);
+    result.extend_from_slice(&payload_bytes);
     result.extend_from_slice(&crc.to_be_bytes());
     result
 }
@@ -60,7 +59,7 @@ pub fn decode_v1(bytes: &[u8]) -> (u32, CollectorCommandV1) {
     let computed_crc = crc32fast::hash(payload);
     assert_eq!(crc, computed_crc);
 
-    (ts, serde_json::from_slice(payload).unwrap())
+    (ts, bincode::deserialize(payload).unwrap())
 }
 
 #[cfg(test)]
