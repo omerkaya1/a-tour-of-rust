@@ -16,6 +16,7 @@ async fn main() -> anyhow::Result<()> {
 
     let app = Router::new()
         .route("/", get(handler::index))
+        .route("/collector.html", get(handler::collector))
         .route("/api/all", get(handler::show_all))
         .route("/api/collector", get(handler::show_collectors))
         .route("/api/collector/{id}", get(handler::collector_data))

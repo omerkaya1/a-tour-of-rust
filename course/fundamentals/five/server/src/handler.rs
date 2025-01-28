@@ -66,3 +66,9 @@ pub async fn index() -> Html<String> {
     let contents = tokio::fs::read_to_string(path).await.unwrap();
     Html(contents)
 }
+
+pub async fn collector() -> Html<String> {
+    let path = std::path::Path::new("web/collector.html");
+    let contents = tokio::fs::read_to_string(path).await.unwrap();
+    Html(contents)
+}
