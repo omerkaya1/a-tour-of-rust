@@ -1,8 +1,8 @@
-use shared_data::{decode_v1, CollectorCommandV1, DATA_COLLECTION_ADDRESS};
+use shared_data::{decode_v1, encode_response_v1, CollectorCommandV1, CollectorResponseV1, DATA_COLLECTION_ADDRESS};
 use sqlx::{Pool, Sqlite};
 use std::net::SocketAddr;
 use tokio::{
-    io::AsyncReadExt,
+    io::{AsyncReadExt, AsyncWriteExt},
     net::{TcpListener, TcpStream},
 };
 
@@ -48,8 +48,12 @@ async fn new_connection(mut socket: TcpStream, addr: SocketAddr, cnn: Pool<Sqlit
             .execute(&cnn)
             .await;
         if result.is_err() {
-            println!("failed to insert data into the database: {result:?}")
+            println!("failed to insert data into the database: {result:?}");
+            continue;
         }
+        let ack = CollectorResponseV1::Ack(0);
+        let resp_bytes = encode_response_v1(ack);
+        let _ = socket.write_all(&resp_bytes).await;
     }
 }
 

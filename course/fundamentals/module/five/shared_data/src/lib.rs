@@ -24,6 +24,20 @@ pub enum CollectorCommandV1 {
     },
 }
 
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+pub enum CollectorResponseV1 {
+    Ack(u32),
+}
+
+pub fn encode_response_v1(resp: CollectorResponseV1) -> Vec<u8> {
+    bincode::serialize(&resp).unwrap()
+}
+
+pub fn decode_response_v1(b: &[u8]) -> CollectorResponseV1 { // for proper error handling, we can do this: Result<CollectorResponseV1, Box<bincode::ErrorKind>>
+    bincode::deserialize(b).unwrap()
+}
+
 pub fn encode_v1(cmd: &CollectorCommandV1) -> Vec<u8> {
     let payload_bytes = bincode::serialize(cmd).unwrap();
     let crc = crc32fast::hash(&payload_bytes);
@@ -78,5 +92,13 @@ mod tests {
         let (ts, decoded) = decode_v1(&encoded);
         assert_eq!(decoded, cmd);
         assert!(ts > 0)
+    }
+
+    #[test]
+    fn test_encode_decode_response_v1() {
+        let resp = CollectorResponseV1::Ack(123);
+        let encoded = encode_response_v1(resp.clone());
+        let decoded = decode_response_v1(&encoded);
+        assert_eq!(decoded, resp);
     }
 }
