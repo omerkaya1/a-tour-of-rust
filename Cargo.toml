@@ -62,3 +62,21 @@ members = [
     "course/fundamentals/module/five/collector",
     "course/fundamentals/module/five/server",
 ]
+
+[profile.release]
+# shrink the binary
+opt-level = "z"
+# remove symbols
+strip = true
+# optimises crates
+lto = true
+# 
+codegen-units = 1
+# useful for IoT
+panic = "abort"
+# using rust nightly features
+# rustup toolchain nightly
+# rustup toolchain install nightly
+# rustup component add rust-src --toolchain nightly
+# rustc -vV
+# cargo +nightly build -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort --target x86_64-apple-darwin --release
