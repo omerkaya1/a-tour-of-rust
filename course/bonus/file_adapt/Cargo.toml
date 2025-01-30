@@ -1,0 +1,12 @@
+[package]
+name = "file_adapt"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum = "0.6.19"
+http-body-util = "0.1.2"
+pin-project-lite = "0.2.16"
+tokio = { version = "1.43.0", features = ["full"] }
+tokio-stream = { version = "0.1.17", features = ["full"] }
+tokio-util = { version = "0.7.13", features = ["io"] }

@@ -60,8 +60,9 @@ members = [
     "course/fundamentals/module/four/bytes",
     "course/fundamentals/module/five/shared_data",
     "course/fundamentals/module/five/collector",
-    "course/fundamentals/module/five/server", 
+    "course/fundamentals/module/five/server",
     "course/bonus/read_file",
+    "course/bonus/file_adapt",
 ]
 
 [profile.release]
