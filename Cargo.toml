@@ -62,7 +62,8 @@ members = [
     "course/fundamentals/module/five/collector",
     "course/fundamentals/module/five/server",
     "course/bonus/read_file",
-    "course/bonus/file_adapt",
+    "course/bonus/file_adapt", 
+    "course/best-practices/format",
 ]
 
 [profile.release]
