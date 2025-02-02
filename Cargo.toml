@@ -65,6 +65,7 @@ members = [
     "course/bonus/file_adapt",
     "course/best-practices/format",
     "course/best-practices/docs",
+    "course/best-practices/dependencies",
 ]
 
 [profile.release]
