@@ -66,6 +66,7 @@ members = [
     "course/best-practices/format",
     "course/best-practices/docs",
     "course/best-practices/dependencies",
+    "course/best-practices/license",
 ]
 
 [profile.release]
