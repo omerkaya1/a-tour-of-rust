@@ -1,15 +1,26 @@
 use std::collections::HashMap;
+use std::sync::Arc;
 
-use axum::{extract::Path, extract::Query, response::Html, routing::get, Router};
+use axum::extract::State;
 use axum::http::HeaderMap;
+use axum::{extract::Path, extract::Query, response::Html, routing::get, Router};
+
+struct MyStruct {
+    cfg: String,
+}
 
 #[tokio::main]
 async fn main() {
+    let shared_cfg = Arc::new(MyStruct{
+        cfg: "some_str".to_string(),
+    });
+
     let app = Router::new()
         .route("/", get(handler))
         .route("/book/{id}", get(path_extract))
         .route("/book", get(query_extract))
-        .route("/header", get(header_extract));
+        .route("/header", get(header_extract))
+        .with_state(shared_cfg);
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
         .await
@@ -18,8 +29,10 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 }
 
-async fn handler() -> Html<&'static str> {
-    Html("<h1>Hello!</h1>")
+async fn handler(
+    State(cfg): State<Arc<MyStruct>>
+) -> Html<String> {
+    Html(format!("<h1>{}</h1>", cfg.cfg))
 }
 
 // path extraction logic
