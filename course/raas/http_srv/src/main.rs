@@ -1,20 +1,29 @@
 use std::collections::HashMap;
-use std::sync::{Arc, atomic::{AtomicUsize, Ordering::Relaxed}};
+use std::sync::{
+    atomic::{AtomicUsize, Ordering::Relaxed},
+    Arc,
+};
 
-use axum::extract::State;
 use axum::http::HeaderMap;
+use axum::Extension;
 use axum::{extract::Path, extract::Query, response::Html, routing::get, Router};
 
 struct MyStruct {
-    cfg: String,
+    text: String,
+}
+
+struct Counter {
     cnt: AtomicUsize,
 }
 
 #[tokio::main]
 async fn main() {
-    let shared_cfg = Arc::new(MyStruct{
-        cfg: "some_str".to_string(),
+    let shared_counter = Arc::new(Counter {
         cnt: AtomicUsize::new(0),
+    });
+
+    let shared_text = Arc::new(MyStruct {
+        text: "some".to_string(),
     });
 
     let app = Router::new()
@@ -22,7 +31,8 @@ async fn main() {
         .route("/book/{id}", get(path_extract))
         .route("/book", get(query_extract))
         .route("/header", get(header_extract))
-        .with_state(shared_cfg);
+        .layer(Extension(shared_counter))
+        .layer(Extension(shared_text));
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
         .await
@@ -32,10 +42,15 @@ async fn main() {
 }
 
 async fn handler(
-    State(cfg): State<Arc<MyStruct>>
+    Extension(cnt): Extension<Arc<Counter>>,
+    Extension(text): Extension<Arc<MyStruct>>,
 ) -> Html<String> {
-    cfg.cnt.fetch_add(1, Relaxed);
-    Html(format!("<h1>{} - counter = {}</h1>", cfg.cfg, cfg.cnt.load(Relaxed)))
+    cnt.cnt.fetch_add(1, Relaxed);
+    Html(format!(
+        "<h1>{} You are the visitor #{}</h1>",
+        text.text,
+        cnt.cnt.load(Relaxed)
+    ))
 }
 
 // path extraction logic
