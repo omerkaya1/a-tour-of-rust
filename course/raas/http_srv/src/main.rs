@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::sync::Arc;
+use std::sync::{Arc, atomic::{AtomicUsize, Ordering::Relaxed}};
 
 use axum::extract::State;
 use axum::http::HeaderMap;
@@ -7,12 +7,14 @@ use axum::{extract::Path, extract::Query, response::Html, routing::get, Router};
 
 struct MyStruct {
     cfg: String,
+    cnt: AtomicUsize,
 }
 
 #[tokio::main]
 async fn main() {
     let shared_cfg = Arc::new(MyStruct{
         cfg: "some_str".to_string(),
+        cnt: AtomicUsize::new(0),
     });
 
     let app = Router::new()
@@ -32,7 +34,8 @@ async fn main() {
 async fn handler(
     State(cfg): State<Arc<MyStruct>>
 ) -> Html<String> {
-    Html(format!("<h1>{}</h1>", cfg.cfg))
+    cfg.cnt.fetch_add(1, Relaxed);
+    Html(format!("<h1>{} - counter = {}</h1>", cfg.cfg, cfg.cnt.load(Relaxed)))
 }
 
 // path extraction logic
