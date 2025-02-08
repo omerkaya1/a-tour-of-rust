@@ -4,6 +4,7 @@ use std::sync::{
     Arc,
 };
 
+use axum::extract::State;
 use axum::http::HeaderMap;
 use axum::Extension;
 use axum::{extract::Path, extract::Query, response::Html, routing::get, Router};
@@ -16,10 +17,22 @@ struct Counter {
     cnt: AtomicUsize,
 }
 
+struct MyState(i32);
+
 fn service_one() -> Router {
-    Router::new().route("/", get(|| async {
-        Html("service one".to_string())
-    }))
+    let state = Arc::new(MyState(5));
+    Router::new()
+    .route("/", get(service_one_handler)).with_state(state)
+}
+
+async fn service_one_handler(
+    Extension(cnt): Extension<Arc<Counter>>,
+    State(state): State<Arc<MyState>>
+) -> Html<String> {
+    cnt.cnt.fetch_add(1, Relaxed);
+    Html(format!(
+        "Service {} - {}", cnt.cnt.load(Relaxed), state.0
+    ))
 }
 
 #[tokio::main]
