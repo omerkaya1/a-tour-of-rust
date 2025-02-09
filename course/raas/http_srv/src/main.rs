@@ -8,6 +8,7 @@ use axum::extract::State;
 use axum::http::HeaderMap;
 use axum::{extract::Path, extract::Query, response::Html, routing::get, Router};
 use axum::{Extension, Json};
+use reqwest::StatusCode;
 
 struct MyStruct {
     text: String,
@@ -51,6 +52,7 @@ async fn main() {
         .route("/book", get(query_extract))
         .route("/header", get(header_extract))
         .route("/check", get(req_handler))
+        .route("/status", get(status))
         .layer(Extension(shared_counter))
         .layer(Extension(shared_text));
 
@@ -94,4 +96,8 @@ async fn req_handler() -> Html<String> {
         .await
         .unwrap();
     Html(format!("<h1>Remote counter: {cur_cnt}</h1>"))
+}
+
+async fn status() -> StatusCode {
+    StatusCode::SERVICE_UNAVAILABLE
 }
