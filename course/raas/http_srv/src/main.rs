@@ -6,8 +6,8 @@ use std::sync::{
 
 use axum::extract::State;
 use axum::http::HeaderMap;
-use axum::Extension;
 use axum::{extract::Path, extract::Query, response::Html, routing::get, Router};
+use axum::{Extension, Json};
 
 struct MyStruct {
     text: String,
@@ -22,17 +22,16 @@ struct MyState(i32);
 fn service_one() -> Router {
     let state = Arc::new(MyState(5));
     Router::new()
-    .route("/", get(service_one_handler)).with_state(state)
+        .route("/", get(service_one_handler))
+        .with_state(state)
 }
 
 async fn service_one_handler(
     Extension(cnt): Extension<Arc<Counter>>,
-    State(state): State<Arc<MyState>>
+    State(state): State<Arc<MyState>>,
 ) -> Html<String> {
     cnt.cnt.fetch_add(1, Relaxed);
-    Html(format!(
-        "Service {} - {}", cnt.cnt.load(Relaxed), state.0
-    ))
+    Html(format!("Service {} - {}", cnt.cnt.load(Relaxed), state.0))
 }
 
 #[tokio::main]
@@ -51,6 +50,7 @@ async fn main() {
         .route("/book/{id}", get(path_extract))
         .route("/book", get(query_extract))
         .route("/header", get(header_extract))
+        .route("/check", get(req_handler))
         .layer(Extension(shared_counter))
         .layer(Extension(shared_text));
 
@@ -64,13 +64,9 @@ async fn main() {
 async fn handler(
     Extension(cnt): Extension<Arc<Counter>>,
     Extension(text): Extension<Arc<MyStruct>>,
-) -> Html<String> {
+) -> Json<usize> {
     cnt.cnt.fetch_add(1, Relaxed);
-    Html(format!(
-        "<h1>{} You are the visitor #{}</h1>",
-        text.text,
-        cnt.cnt.load(Relaxed)
-    ))
+    Json(cnt.cnt.load(Relaxed))
 }
 
 // path extraction logic
@@ -87,4 +83,15 @@ async fn query_extract(Query(params): Query<HashMap<String, String>>) -> Html<St
 // header extraction logic
 async fn header_extract(headers: HeaderMap) -> Html<String> {
     Html(format!("headers passed: {headers:#?}"))
+}
+
+async fn req_handler() -> Html<String> {
+    println!("sending a GET request");
+    let cur_cnt = reqwest::get("http://127.0.0.1/")
+        .await
+        .unwrap()
+        .json::<i32>()
+        .await
+        .unwrap();
+    Html(format!("<h1>Remote counter: {cur_cnt}</h1>"))
 }
