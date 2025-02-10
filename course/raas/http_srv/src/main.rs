@@ -6,6 +6,7 @@ use std::sync::{
 
 use axum::extract::State;
 use axum::http::HeaderMap;
+use axum::response::IntoResponse;
 use axum::{extract::Path, extract::Query, response::Html, routing::get, Router};
 use axum::{Extension, Json};
 use reqwest::StatusCode;
@@ -98,6 +99,9 @@ async fn req_handler() -> Html<String> {
     Html(format!("<h1>Remote counter: {cur_cnt}</h1>"))
 }
 
-async fn status() -> StatusCode {
-    StatusCode::SERVICE_UNAVAILABLE
+async fn status() -> Result<impl IntoResponse, reqwest::StatusCode> {
+    if true {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+    Ok(Json(42))
 }
