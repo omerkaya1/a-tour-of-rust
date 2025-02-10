@@ -107,18 +107,18 @@ async fn status() -> Result<impl IntoResponse, reqwest::StatusCode> {
     Ok(Json(42))
 }
 
-async fn handler_time() -> Result<impl IntoResponse, reqwest::StatusCode> {
+async fn handler_time() -> Result<impl IntoResponse, (reqwest::StatusCode, String)> {
     let start = std::time::SystemTime::now();
 
     let secs = start
         .duration_since(std::time::UNIX_EPOCH)
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "bad clock".to_string()))?
         .as_secs()
         % 3;
 
     let devided = 100u64
         .checked_div(secs)
-        .ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
+        .ok_or((StatusCode::INTERNAL_SERVER_ERROR, "div by zero".to_string()))?;
 
     Ok(Json(devided))
 }
