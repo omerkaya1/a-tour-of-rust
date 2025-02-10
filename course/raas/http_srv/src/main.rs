@@ -54,6 +54,7 @@ async fn main() {
         .route("/header", get(header_extract))
         .route("/check", get(req_handler))
         .route("/status", get(status))
+        .route("/time", get(handler_time))
         .layer(Extension(shared_counter))
         .layer(Extension(shared_text));
 
@@ -104,4 +105,20 @@ async fn status() -> Result<impl IntoResponse, reqwest::StatusCode> {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
     Ok(Json(42))
+}
+
+async fn handler_time() -> Result<impl IntoResponse, reqwest::StatusCode> {
+    let start = std::time::SystemTime::now();
+
+    let secs = start
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+        .as_secs()
+        % 3;
+
+    let devided = 100u64
+        .checked_div(secs)
+        .ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    Ok(Json(devided))
 }
