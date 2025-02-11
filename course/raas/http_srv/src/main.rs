@@ -10,6 +10,7 @@ use axum::response::IntoResponse;
 use axum::{extract::Path, extract::Query, response::Html, routing::get, Router};
 use axum::{Extension, Json};
 use reqwest::StatusCode;
+use tower_http::services::ServeDir;
 
 struct MyStruct {
     text: String,
@@ -55,6 +56,8 @@ async fn main() {
         .route("/check", get(req_handler))
         .route("/status", get(status))
         .route("/time", get(handler_time))
+        .route("/static", get(static_handler))
+        .fallback_service(ServeDir::new("web"))
         .layer(Extension(shared_counter))
         .layer(Extension(shared_text));
 
@@ -121,4 +124,8 @@ async fn handler_time() -> Result<impl IntoResponse, (reqwest::StatusCode, Strin
         .ok_or((StatusCode::INTERNAL_SERVER_ERROR, "div by zero".to_string()))?;
 
     Ok(Json(devided))
+}
+
+async fn static_handler() -> Result<impl IntoResponse, StatusCode> {
+    Ok(Html("<h1>static handler</h1>"))
 }
