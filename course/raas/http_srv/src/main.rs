@@ -57,6 +57,7 @@ async fn main() {
         .route("/status", get(status))
         .route("/time", get(handler_time))
         .route("/static", get(static_handler))
+        .route("/request-id", get(header_handler))
         .fallback_service(ServeDir::new("web"))
         .layer(Extension(shared_counter))
         .layer(Extension(shared_text));
@@ -64,6 +65,8 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
         .await
         .unwrap();
+
+    tokio::spawn(request_with_id());
 
     axum::serve(listener, app).await.unwrap();
 }
@@ -128,4 +131,27 @@ async fn handler_time() -> Result<impl IntoResponse, (reqwest::StatusCode, Strin
 
 async fn static_handler() -> Result<impl IntoResponse, StatusCode> {
     Ok(Html("<h1>static handler</h1>"))
+}
+
+async fn header_handler(headers: HeaderMap) -> Html<String> {
+    if let Some(h) = headers.get("x-request-id") {
+        return Html(format!("request id: {}", h.to_str().unwrap()));
+    }
+    Html("x-request-id header not found".to_string())
+}
+
+async fn request_with_id() {
+    tokio::time::sleep(std::time::Duration::from_millis(1500)).await;
+
+    let resp = reqwest::Client::new()
+        .get("http://127.0.0.1:3000/request-id")
+        .header("x-request-id", "1234")
+        .send()
+        .await
+        .unwrap()
+        .text()
+        .await
+        .unwrap();
+
+    println!("{}", resp);
 }
