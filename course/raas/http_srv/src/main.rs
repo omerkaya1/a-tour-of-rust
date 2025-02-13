@@ -4,11 +4,12 @@ use std::sync::{
     Arc,
 };
 
-use axum::extract::State;
+use axum::extract::{Request, State};
 use axum::http::HeaderMap;
+use axum::middleware::Next;
 use axum::response::IntoResponse;
 use axum::{extract::Path, extract::Query, response::Html, routing::get, Router};
-use axum::{Extension, Json};
+use axum::{middleware, Extension, Json};
 use reqwest::StatusCode;
 use tower_http::services::ServeDir;
 
@@ -58,6 +59,7 @@ async fn main() {
         .route("/time", get(handler_time))
         .route("/static", get(static_handler))
         .route("/request-id", get(header_handler))
+        .route_layer(middleware::from_fn(auth))
         .fallback_service(ServeDir::new("web"))
         .layer(Extension(shared_counter))
         .layer(Extension(shared_text));
@@ -154,4 +156,30 @@ async fn request_with_id() {
         .unwrap();
 
     println!("{}", resp);
+
+    let resp = reqwest::Client::new()
+        .get("http://127.0.0.1:3000/request-id")
+        .header("x-request-id", "bad")
+        .send()
+        .await
+        .unwrap()
+        .text()
+        .await
+        .unwrap();
+
+    println!("{}", resp);
+}
+
+async fn auth(
+    headers: HeaderMap,
+    req: Request,
+    next: Next
+) -> Result<impl IntoResponse, (reqwest::StatusCode, String)> {
+    if let Some(h) = headers.get("x-request-id") {
+        if h.to_str().unwrap() == "1234" {
+            println!("OK");
+            return Ok(next.run(req).await);
+        }
+    }
+    Err((StatusCode::UNAUTHORIZED, "invalid header".to_string()))
 }
