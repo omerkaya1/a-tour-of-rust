@@ -135,11 +135,10 @@ async fn static_handler() -> Result<impl IntoResponse, StatusCode> {
     Ok(Html("<h1>static handler</h1>"))
 }
 
-async fn header_handler(headers: HeaderMap) -> Html<String> {
-    if let Some(h) = headers.get("x-request-id") {
-        return Html(format!("request id: {}", h.to_str().unwrap()));
-    }
-    Html("x-request-id header not found".to_string())
+async fn header_handler(
+    Extension(auth): Extension<AuthHeader>
+) -> Html<String> {
+    Html(format!("request id: {}", auth.id))
 }
 
 async fn request_with_id() {
@@ -170,14 +169,22 @@ async fn request_with_id() {
     println!("{}", resp);
 }
 
+#[derive(Debug, Clone)]
+struct AuthHeader {
+    id: String,
+}
+
 async fn auth(
     headers: HeaderMap,
-    req: Request,
-    next: Next
+    mut req: Request,
+    next: Next,
 ) -> Result<impl IntoResponse, (reqwest::StatusCode, String)> {
     if let Some(h) = headers.get("x-request-id") {
-        if h.to_str().unwrap() == "1234" {
-            println!("OK");
+        let header_data = h.to_str().unwrap();
+        if header_data == "1234" {
+            req.extensions_mut().insert(AuthHeader {
+                id: header_data.to_string(),
+            });
             return Ok(next.run(req).await);
         }
     }
