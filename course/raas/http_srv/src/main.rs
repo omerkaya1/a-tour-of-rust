@@ -48,6 +48,8 @@ async fn main() {
         text: "some".to_string(),
     });
 
+    let other_router = Router::new().route("/status2", get(status2));
+
     let app = Router::new()
         .nest("/1", service_one()) // sub routing
         .route("/", get(handler))
@@ -62,7 +64,8 @@ async fn main() {
         .route_layer(middleware::from_fn(auth))
         .fallback_service(ServeDir::new("web"))
         .layer(Extension(shared_counter))
-        .layer(Extension(shared_text));
+        .layer(Extension(shared_text))
+        .merge(other_router);
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
         .await
@@ -113,6 +116,13 @@ async fn status() -> Result<impl IntoResponse, reqwest::StatusCode> {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
     Ok(Json(42))
+}
+
+async fn status2() -> Result<impl IntoResponse, reqwest::StatusCode> {
+    if true {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+    Ok(Json(142))
 }
 
 async fn handler_time() -> Result<impl IntoResponse, (reqwest::StatusCode, String)> {
