@@ -11,6 +11,7 @@ use axum::response::IntoResponse;
 use axum::{extract::Path, extract::Query, response::Html, routing::get, Router};
 use axum::{middleware, Extension, Json};
 use reqwest::StatusCode;
+use tower_http::compression::CompressionLayer;
 use tower_http::services::ServeDir;
 
 struct MyStruct {
@@ -60,11 +61,13 @@ async fn main() {
         .route("/status", get(status))
         .route("/time", get(handler_time))
         .route("/static", get(static_handler))
+        .route("/compressed_file", get(compressed_file))
         .route("/request-id", get(header_handler))
         .route_layer(middleware::from_fn(auth))
         .fallback_service(ServeDir::new("web"))
         .layer(Extension(shared_counter))
         .layer(Extension(shared_text))
+        .layer(CompressionLayer::new())
         .merge(other_router);
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
@@ -199,4 +202,9 @@ async fn auth(
         }
     }
     Err((StatusCode::UNAUTHORIZED, "invalid header".to_string()))
+}
+
+async fn compressed_file() -> impl IntoResponse {
+    const WAR_AND_PEACE: &str = include_str!("../../../../warandpeace.txt");
+    Html(WAR_AND_PEACE)
 }
