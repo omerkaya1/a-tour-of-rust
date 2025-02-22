@@ -16,6 +16,7 @@ use reqwest::StatusCode;
 use tokio::join;
 use tower_http::compression::CompressionLayer;
 use tower_http::services::ServeDir;
+use tower_http::trace::TraceLayer;
 use tracing::info;
 
 struct MyStruct {
@@ -46,13 +47,13 @@ async fn service_one_handler(
 #[tokio::main]
 async fn main() {
     // add tracing subscriber
-    // tracing_subscriber::fmt::init(); - the default tracing (to enable debug, set the RUST_LOG env variable)
-    let formatting = tracing_subscriber::fmt::format()
-        .with_level(true)
-        .with_line_number(true)
-        .with_thread_ids(true);
+    tracing_subscriber::fmt::init(); // - the default tracing (to enable debug, set the RUST_LOG env variable)
+    // let formatting = tracing_subscriber::fmt::format()
+    //     .with_level(true)
+    //     .with_line_number(true)
+    //     .with_thread_ids(true);
 
-    tracing_subscriber::fmt().event_format(formatting).init();
+    // tracing_subscriber::fmt().event_format(formatting).init();
     info!("iniialising the web server");
 
     let shared_counter = Arc::new(Counter {
@@ -82,6 +83,9 @@ async fn main() {
         .layer(Extension(shared_counter))
         .layer(Extension(shared_text))
         .layer(CompressionLayer::new())
+        // NOTE: layer positioning order is important!
+        // requires RUST_LOG=debug to be set!
+        .layer(TraceLayer::new_for_http())
         .merge(other_router);
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
