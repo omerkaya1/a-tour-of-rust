@@ -17,16 +17,20 @@ use tokio::join;
 use tower_http::compression::CompressionLayer;
 use tower_http::services::ServeDir;
 use tower_http::trace::TraceLayer;
-use tracing::info;
+use tracing::{info, instrument};
+use tracing_subscriber::fmt::format::FmtSpan;
 
+#[derive(Debug)]
 struct MyStruct {
     text: String,
 }
 
+#[derive(Debug)]
 struct Counter {
     cnt: AtomicUsize,
 }
 
+#[derive(Debug)]
 struct MyState(i32);
 
 fn service_one() -> Router {
@@ -47,11 +51,17 @@ async fn service_one_handler(
 #[tokio::main]
 async fn main() {
     // add tracing subscriber
-    tracing_subscriber::fmt::init(); // - the default tracing (to enable debug, set the RUST_LOG env variable)
-    // let formatting = tracing_subscriber::fmt::format()
-    //     .with_level(true)
-    //     .with_line_number(true)
-    //     .with_thread_ids(true);
+    let subscriber = tracing_subscriber::fmt()
+        .compact()
+        .with_file(true)
+        .with_line_number(true)
+        .with_thread_ids(true)
+        .with_target(false)
+        .with_span_events(FmtSpan::CLOSE)
+        .finish();
+
+    // set the initialised subscriber as default
+    tracing::subscriber::set_global_default(subscriber);
 
     // tracing_subscriber::fmt().event_format(formatting).init();
     info!("iniialising the web server");
@@ -99,6 +109,7 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 }
 
+#[instrument]
 async fn handler(
     Extension(cnt): Extension<Arc<Counter>>,
     Extension(text): Extension<Arc<MyStruct>>,
@@ -172,6 +183,7 @@ async fn header_handler(Extension(auth): Extension<AuthHeader>) -> Html<String> 
     Html(format!("request id: {}", auth.id))
 }
 
+#[instrument]
 async fn request_with_id() {
     tokio::time::sleep(std::time::Duration::from_millis(1500)).await;
 
