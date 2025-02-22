@@ -6,8 +6,9 @@ use std::sync::{
     Arc,
 };
 
+use axum::body::Body;
 use axum::extract::{Request, State};
-use axum::http::HeaderMap;
+use axum::http::{method, version, HeaderMap};
 use axum::middleware::Next;
 use axum::response::IntoResponse;
 use axum::{extract::Path, extract::Query, response::Html, routing::get, Router};
@@ -95,7 +96,17 @@ async fn main() {
         .layer(CompressionLayer::new())
         // NOTE: layer positioning order is important!
         // requires RUST_LOG=debug to be set!
-        .layer(TraceLayer::new_for_http())
+        .layer(TraceLayer::new_for_http().make_span_with(|req: &Request<Body>| {
+            let req_id = uuid::Uuid::new_v4();
+            tracing::span!(
+                tracing::Level::INFO,
+                "request",
+                method = tracing::field::display(req.method()),
+                uri = tracing::field::display(req.uri()),
+                request_id = tracing::field::display(req_id),
+                version = tracing::field::debug(req.version()),
+            )
+        }))
         .merge(other_router);
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
