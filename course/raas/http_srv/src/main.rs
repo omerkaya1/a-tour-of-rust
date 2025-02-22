@@ -1,3 +1,5 @@
+#![allow(dead_code, unused)]
+
 use std::collections::HashMap;
 use std::sync::{
     atomic::{AtomicUsize, Ordering::Relaxed},
@@ -11,8 +13,10 @@ use axum::response::IntoResponse;
 use axum::{extract::Path, extract::Query, response::Html, routing::get, Router};
 use axum::{middleware, Extension, Json};
 use reqwest::StatusCode;
+use tokio::join;
 use tower_http::compression::CompressionLayer;
 use tower_http::services::ServeDir;
+use tracing::info;
 
 struct MyStruct {
     text: String,
@@ -41,6 +45,16 @@ async fn service_one_handler(
 
 #[tokio::main]
 async fn main() {
+    // add tracing subscriber
+    // tracing_subscriber::fmt::init(); - the default tracing (to enable debug, set the RUST_LOG env variable)
+    let formatting = tracing_subscriber::fmt::format()
+        .with_level(true)
+        .with_line_number(true)
+        .with_thread_ids(true);
+
+    tracing_subscriber::fmt().event_format(formatting).init();
+    info!("iniialising the web server");
+
     let shared_counter = Arc::new(Counter {
         cnt: AtomicUsize::new(0),
     });
@@ -73,6 +87,8 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
         .await
         .unwrap();
+
+    info!("listening on {}", listener.local_addr().unwrap());
 
     tokio::spawn(request_with_id());
 
@@ -148,9 +164,7 @@ async fn static_handler() -> Result<impl IntoResponse, StatusCode> {
     Ok(Html("<h1>static handler</h1>"))
 }
 
-async fn header_handler(
-    Extension(auth): Extension<AuthHeader>
-) -> Html<String> {
+async fn header_handler(Extension(auth): Extension<AuthHeader>) -> Html<String> {
     Html(format!("request id: {}", auth.id))
 }
 
@@ -207,4 +221,9 @@ async fn auth(
 async fn compressed_file() -> impl IntoResponse {
     const WAR_AND_PEACE: &str = include_str!("../../../../warandpeace.txt");
     Html(WAR_AND_PEACE)
+}
+
+async fn tracing_check() -> Html<&'static str> {
+    tracing::info!("serving trace");
+    Html("<h1>TRACING!</h1>")
 }
