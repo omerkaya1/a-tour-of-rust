@@ -56,15 +56,15 @@ async fn main() {
     let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
     // add tracing subscriber
     let subscriber = tracing_subscriber::fmt()
-        .json()
-        .flatten_event(true)
-        .with_writer(non_blocking)
         .compact()
         .with_file(true)
         .with_line_number(true)
         .with_thread_ids(true)
         .with_target(false)
         .with_span_events(FmtSpan::CLOSE)
+        .json()
+        .flatten_event(true)
+        .with_writer(non_blocking)
         .finish();
 
     // set the initialised subscriber as default
