@@ -51,8 +51,14 @@ async fn service_one_handler(
 
 #[tokio::main]
 async fn main() {
+    // logging file init
+    let file_appender = tracing_appender::rolling::hourly("log", "server.log");
+    let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
     // add tracing subscriber
     let subscriber = tracing_subscriber::fmt()
+        .json()
+        .flatten_event(true)
+        .with_writer(non_blocking)
         .compact()
         .with_file(true)
         .with_line_number(true)
