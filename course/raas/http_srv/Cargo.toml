@@ -7,7 +7,11 @@ edition = "2021"
 axum = "0.8.1"
 opentelemetry = { version = "0.21.0", features = ["metrics", "logs"] }
 opentelemetry_sdk = { version = "0.21.1", features = ["rt-tokio", "logs"] }
-opentelemetry-otlp = { version = "0.14.0", features = ["tonic", "metrics", "logs"]  }
+opentelemetry-otlp = { version = "0.14.0", features = [
+    "tonic",
+    "metrics",
+    "logs",
+] }
 opentelemetry-semantic-conventions = { version = "0.13.0" }
 opentelemetry-http = "0.10.0"
 tracing-opentelemetry = "0.22.0"
@@ -22,3 +26,7 @@ tracing = "0.1.41"
 tracing-appender = "0.2.3"
 tracing-subscriber = { version = "0.3.19", features = ["json"] }
 uuid = { version = "1.14.0", features = ["v4"] }
+serde = { version = "1.0.195", features = ["derive"] }
+utoipa = { version = "5.3.1", features = ["axum_extras", "macros"] }
+utoipa-redoc = { version = "6.0.0", features = ["axum"] }
+utoipa-swagger-ui = { version = "9.0.0", features = ["axum"] }

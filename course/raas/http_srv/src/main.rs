@@ -13,10 +13,14 @@ use axum::middleware::Next;
 use axum::response::IntoResponse;
 use axum::{extract::Path, extract::Query, response::Html, routing::get, Router};
 use axum::{middleware, Extension, Json};
-use opentelemetry_sdk::{propagation::TraceContextPropagator, runtime, Resource, metrics::MeterProvider, logs::Config};
-use opentelemetry_otlp::{WithExportConfig, ExportConfig};
-use opentelemetry::{global, KeyValue, trace::TraceError, logs::LogError};
+use opentelemetry::{global, logs::LogError, trace::TraceError, KeyValue};
+use opentelemetry_otlp::{ExportConfig, WithExportConfig};
+use opentelemetry_sdk::trace as sdktrace;
+use opentelemetry_sdk::{
+    logs::Config, metrics::MeterProvider, propagation::TraceContextPropagator, runtime, Resource,
+};
 use reqwest::StatusCode;
+use serde::Serialize;
 use tokio::join;
 use tower_http::compression::CompressionLayer;
 use tower_http::services::ServeDir;
@@ -24,9 +28,11 @@ use tower_http::trace::TraceLayer;
 use tracing::level_filters::LevelFilter;
 use tracing::{info, instrument, Level};
 use tracing_subscriber::fmt::format::FmtSpan;
-use opentelemetry_sdk::trace as sdktrace;
 use tracing_subscriber::layer::SubscriberExt;
-use tracing_subscriber::util::SubscriberInitExt; // To avoid name conflicts
+use tracing_subscriber::util::SubscriberInitExt;
+use utoipa::{OpenApi, ToSchema};
+use utoipa_redoc::{Redoc, Servable};
+use utoipa_swagger_ui::SwaggerUi;
 
 #[derive(Debug)]
 struct MyStruct {
@@ -109,6 +115,22 @@ fn init_logs(otlp_endpoint: &str) -> Result<opentelemetry_sdk::logs::Logger, Log
         .install_batch(runtime::Tokio)
 }
 
+// OpenAPI documentation annotations.
+#[derive(OpenApi)]
+#[openapi(
+    paths(
+        swagg_handler,
+    ),
+    components(
+        schemas(HelloWorld)
+    ),
+    modifiers(),
+    tags(
+        (name = "Test System", description = "A really simple API")
+    )
+)]
+struct ApiDoc;
+
 #[tokio::main]
 async fn main() {
     // init otel telemetry tools; uncomment when you need it
@@ -127,7 +149,7 @@ async fn main() {
 
     // let _meter_provider = init_metrics(&otlp_endpoint);
     // let _log_provider = init_logs(&otlp_endpoint);
-    
+
     // logging file init
     let file_appender = tracing_appender::rolling::hourly("log", "server.log");
     let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
@@ -172,6 +194,7 @@ async fn main() {
         .route("/static", get(static_handler))
         .route("/compressed_file", get(compressed_file))
         .route("/request-id", get(header_handler))
+        .route("/swag", get(swagg_handler))
         .route_layer(middleware::from_fn(auth))
         .fallback_service(ServeDir::new("web"))
         .layer(Extension(shared_counter))
@@ -179,17 +202,21 @@ async fn main() {
         .layer(CompressionLayer::new())
         // NOTE: layer positioning order is important!
         // requires RUST_LOG=debug to be set!
-        .layer(TraceLayer::new_for_http().make_span_with(|req: &Request<Body>| {
-            let req_id = uuid::Uuid::new_v4();
-            tracing::span!(
-                tracing::Level::INFO,
-                "request",
-                method = tracing::field::display(req.method()),
-                uri = tracing::field::display(req.uri()),
-                request_id = tracing::field::display(req_id),
-                version = tracing::field::debug(req.version()),
-            )
-        }))
+        .layer(
+            TraceLayer::new_for_http().make_span_with(|req: &Request<Body>| {
+                let req_id = uuid::Uuid::new_v4();
+                tracing::span!(
+                    tracing::Level::INFO,
+                    "request",
+                    method = tracing::field::display(req.method()),
+                    uri = tracing::field::display(req.uri()),
+                    request_id = tracing::field::display(req_id),
+                    version = tracing::field::debug(req.version()),
+                )
+            }),
+        )
+        .merge(SwaggerUi::new("/swagger-ui").url("/doc/api/openapi.json", ApiDoc::openapi()))
+        .merge(Redoc::with_url("/redoc", ApiDoc::openapi()))
         .merge(other_router);
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
@@ -337,4 +364,22 @@ async fn compressed_file() -> impl IntoResponse {
 async fn tracing_check() -> Html<&'static str> {
     tracing::info!("serving trace");
     Html("<h1>TRACING!</h1>")
+}
+
+#[derive(Serialize, ToSchema)]
+struct HelloWorld {
+    message: String,
+}
+
+#[utoipa::path(
+    get,
+    path = "/",
+    responses(
+        (status = 200, description = "Say Hello to the World", body = [HelloWorld])
+    )
+)]
+async fn swagg_handler() -> Json<HelloWorld> {
+    Json(HelloWorld {
+        message: "Hello, World!".to_string(),
+    })
 }
