@@ -13,13 +13,20 @@ use axum::middleware::Next;
 use axum::response::IntoResponse;
 use axum::{extract::Path, extract::Query, response::Html, routing::get, Router};
 use axum::{middleware, Extension, Json};
+use opentelemetry_sdk::{propagation::TraceContextPropagator, runtime, Resource, metrics::MeterProvider, logs::Config};
+use opentelemetry_otlp::{WithExportConfig, ExportConfig};
+use opentelemetry::{global, KeyValue, trace::TraceError, logs::LogError};
 use reqwest::StatusCode;
 use tokio::join;
 use tower_http::compression::CompressionLayer;
 use tower_http::services::ServeDir;
 use tower_http::trace::TraceLayer;
-use tracing::{info, instrument};
+use tracing::level_filters::LevelFilter;
+use tracing::{info, instrument, Level};
 use tracing_subscriber::fmt::format::FmtSpan;
+use opentelemetry_sdk::trace as sdktrace;
+use tracing_subscriber::layer::SubscriberExt;
+use tracing_subscriber::util::SubscriberInitExt; // To avoid name conflicts
 
 #[derive(Debug)]
 struct MyStruct {
@@ -49,8 +56,78 @@ async fn service_one_handler(
     Html(format!("Service {} - {}", cnt.cnt.load(Relaxed), state.0))
 }
 
+fn init_tracer(otlp_endpoint: &str) -> Result<sdktrace::Tracer, TraceError> {
+    opentelemetry_otlp::new_pipeline()
+        .tracing()
+        .with_exporter(
+            opentelemetry_otlp::new_exporter()
+                .tonic()
+                .with_endpoint(otlp_endpoint),
+        )
+        .with_trace_config(
+            sdktrace::config().with_resource(Resource::new(vec![KeyValue::new(
+                "service.name",
+                "hello_world",
+            )])),
+        )
+        .install_batch(runtime::Tokio)
+}
+
+fn init_metrics(otlp_endpoint: &str) -> opentelemetry::metrics::Result<MeterProvider> {
+    let export_config = ExportConfig {
+        endpoint: otlp_endpoint.to_string(),
+        ..ExportConfig::default()
+    };
+    opentelemetry_otlp::new_pipeline()
+        .metrics(runtime::Tokio)
+        .with_exporter(
+            opentelemetry_otlp::new_exporter()
+                .tonic()
+                .with_export_config(export_config),
+        )
+        .with_resource(Resource::new(vec![KeyValue::new(
+            opentelemetry_semantic_conventions::resource::SERVICE_NAME,
+            "hello_world",
+        )]))
+        .build()
+}
+
+fn init_logs(otlp_endpoint: &str) -> Result<opentelemetry_sdk::logs::Logger, LogError> {
+    opentelemetry_otlp::new_pipeline()
+        .logging()
+        .with_log_config(
+            Config::default().with_resource(Resource::new(vec![KeyValue::new(
+                opentelemetry_semantic_conventions::resource::SERVICE_NAME,
+                "hello_world",
+            )])),
+        )
+        .with_exporter(
+            opentelemetry_otlp::new_exporter()
+                .tonic()
+                .with_endpoint(otlp_endpoint.to_string()),
+        )
+        .install_batch(runtime::Tokio)
+}
+
 #[tokio::main]
 async fn main() {
+    // init otel telemetry tools; uncomment when you need it
+    // global::set_text_map_propagator(TraceContextPropagator::new());
+
+    // let otlp_endpoint = "http://localhost:4317";
+
+    // let tracer = init_tracer(&otlp_endpoint).unwrap();
+
+    // let telemetry_layer = tracing_opentelemetry::layer().with_tracer(tracer);
+    // let subscriber = tracing_subscriber::registry()
+    //     .with(LevelFilter::from_level(Level::DEBUG))
+    //     .with(telemetry_layer);
+
+    // subscriber.try_init();
+
+    // let _meter_provider = init_metrics(&otlp_endpoint);
+    // let _log_provider = init_logs(&otlp_endpoint);
+    
     // logging file init
     let file_appender = tracing_appender::rolling::hourly("log", "server.log");
     let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
@@ -256,6 +333,7 @@ async fn compressed_file() -> impl IntoResponse {
     Html(WAR_AND_PEACE)
 }
 
+#[instrument(level = "info")]
 async fn tracing_check() -> Html<&'static str> {
     tracing::info!("serving trace");
     Html("<h1>TRACING!</h1>")
