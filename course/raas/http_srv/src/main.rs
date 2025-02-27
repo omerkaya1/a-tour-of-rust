@@ -151,11 +151,18 @@ async fn main() {
     // let _log_provider = init_logs(&otlp_endpoint);
 
     let _ = dotenvy::dotenv();
-    
-    let test_var = std::env::var("TEST_VAR")
-        .unwrap_or_else(|_| "default".to_string());
 
-    println!("variable read: {}", test_var);
+    let settings_reader = config::Config::builder()
+        .add_source(config::File::with_name("cfg").required(false))
+        .add_source(config::Environment::with_prefix("APP"))
+        .build()
+        .unwrap();
+
+    let settings = settings_reader
+        .try_deserialize::<HashMap<String, String>>() // the map can be replaced with a struct, provided that the serde::Deserialize is derived
+        .unwrap();
+
+    println!("{settings:?}");
 
     // logging file init
     let file_appender = tracing_appender::rolling::hourly("log", "server.log");

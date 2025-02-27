@@ -31,3 +31,4 @@ utoipa = { version = "5.3.1", features = ["axum_extras", "macros"] }
 utoipa-redoc = { version = "6.0.0", features = ["axum"] }
 utoipa-swagger-ui = { version = "9.0.0", features = ["axum"] }
 dotenvy = "0.15.7"
+config = "0.15.8"
