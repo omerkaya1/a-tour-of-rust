@@ -150,6 +150,13 @@ async fn main() {
     // let _meter_provider = init_metrics(&otlp_endpoint);
     // let _log_provider = init_logs(&otlp_endpoint);
 
+    let _ = dotenvy::dotenv();
+    
+    let test_var = std::env::var("TEST_VAR")
+        .unwrap_or_else(|_| "default".to_string());
+
+    println!("variable read: {}", test_var);
+
     // logging file init
     let file_appender = tracing_appender::rolling::hourly("log", "server.log");
     let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
