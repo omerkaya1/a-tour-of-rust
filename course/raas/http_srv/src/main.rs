@@ -1,10 +1,14 @@
 #![allow(dead_code, unused)]
 
+use async_trait::async_trait;
 use std::collections::HashMap;
 use std::sync::{
     atomic::{AtomicUsize, Ordering::Relaxed},
     Arc,
 };
+use std::time::Duration;
+use std::fmt::Debug;
+use config::{AsyncSource, Config, ConfigError, Format, Map, FileFormat};
 
 use axum::body::Body;
 use axum::extract::{Request, State};
@@ -152,6 +156,10 @@ async fn main() {
 
     let _ = dotenvy::dotenv();
 
+    server().await;
+}
+
+async fn server() {
     let settings_reader = config::Config::builder()
         .add_source(config::File::with_name("cfg").required(false))
         .add_source(config::Environment::with_prefix("APP"))
