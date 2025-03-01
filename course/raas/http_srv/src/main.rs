@@ -8,7 +8,6 @@ use std::sync::{
 };
 use std::time::Duration;
 use std::fmt::Debug;
-use config::{AsyncSource, Config, ConfigError, Format, Map, FileFormat};
 
 use axum::body::Body;
 use axum::extract::{Request, State};

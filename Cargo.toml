@@ -68,7 +68,8 @@ members = [
     "course/best-practices/dependencies",
     "course/best-practices/license",
     "course/raas/http_srv",
-    "course/raas/cfg_server",
+    "course/raas/cfg_server", 
+    "course/raas/cfg_cli",
 ]
 
 [profile.release]
