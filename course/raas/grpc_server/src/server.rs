@@ -1,6 +1,3 @@
-use std::fmt::format;
-use std::ptr::null;
-
 use tonic::{transport::Server, Request, Response, Status};
 
 // this way we ensure that whatever resides in the `hello_module` is being pulled into

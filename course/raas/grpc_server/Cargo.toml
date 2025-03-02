@@ -8,7 +8,7 @@ name = "hello-server"
 path = "src/server.rs"
 
 [[bin]]
-name = "hello-client.rs"
+name = "hello-client"
 path = "src/client.rs"
 
 [dependencies]
