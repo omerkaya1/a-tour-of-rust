@@ -71,6 +71,7 @@ members = [
     "course/raas/cfg_server",
     "course/raas/cfg_cli",
     "course/raas/grpc_server",
+    "course/raas/grpc_stream",
 ]
 
 [profile.release]
