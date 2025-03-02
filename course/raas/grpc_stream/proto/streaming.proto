@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package streamig;
+package streaming;
 
-service Streamig {
+service Streaming {
     rpc Squares(Start) returns (stream Square);
 }
 
