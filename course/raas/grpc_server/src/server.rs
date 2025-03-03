@@ -24,13 +24,23 @@ impl Greeter for MyGreeter {
     }
 }
 
+fn auth(req: Request<()>) -> Result<Request<()>, Status> {
+    use tonic::metadata::MetadataValue;
+    let token: MetadataValue<_> = "Bearer some-token".parse().unwrap();
+
+    match req.metadata().get("authorization") {
+        Some(t) if token == t => Ok(req),
+        _ => Err(Status::unauthenticated("no valid token data")),
+    }
+}
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let addr = "[::1]:50051".parse()?;
     let greeter = MyGreeter::default();
 
     Server::builder()
-        .add_service(GreeterServer::new(greeter))
+        .add_service(GreeterServer::with_interceptor(greeter, auth))
         .serve(addr)
         .await?;
 
