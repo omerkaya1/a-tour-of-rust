@@ -72,6 +72,7 @@ members = [
     "course/raas/cfg_cli",
     "course/raas/grpc_server",
     "course/raas/grpc_stream",
+    "course/raas/websocket_echo",
 ]
 
 [profile.release]
