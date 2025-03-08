@@ -74,6 +74,7 @@ members = [
     "course/raas/grpc_stream",
     "course/raas/websocket_echo",
     "course/raas/ws_client",
+    "course/raas/ws_json",
 ]
 
 [profile.release]
