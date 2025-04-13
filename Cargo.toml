@@ -75,7 +75,7 @@ members = [
     "course/raas/websocket_echo",
     "course/raas/ws_client",
     "course/raas/ws_json",
-    "exercise/calc_median",
+    "exercise/calc_median", "exercise/find_duplicates",
 ]
 
 [profile.release]
